@@ -12,7 +12,7 @@ vix_file = 'VIX_data.csv'
 index = 'NIFTY 50'
 index_option = 'NIFTY'
 index_lot = 75
-start_date = date(2017,1,1)
+start_date = date(2019,2,1)
 
 sp_nearer = 100
 options_df = None
@@ -302,7 +302,7 @@ def spread_combo(days_window, sp_spread):
     batches_df['IndexChange']  = batches_df['IndexChange'].apply(lambda x: round(x,2))
     batches_df['Index%Change']  = batches_df['Index%Change'].apply(lambda x: round(x,2))
     
-    batches_df.to_csv('{0}_batch_by_{1}_spread_by_{2}.csv'.format(index,return_dayname(days_window),str(sp_spread)),header=True, sep=',', index=False)
+    batches_df.to_csv('{0}_output_lag-{1}_spread-{2}.csv'.format(index,return_dayname(days_window),str(sp_spread)),header=True, sep=',', index=False)
     options_df.to_csv(option_file, header=True, sep=',', index=False)
     
     sum_df = batches_df[batches_df['Flag'] == 'E']
@@ -312,10 +312,7 @@ def spread_combo(days_window, sp_spread):
 
 
 if __name__ == '__main__':
-    #days_window, sp_spread = 2, 100
-    #sp_c = [(2,100), (3,200), (4,300), (5,400), (6,500)]
-    #sp_c = [(3,200), (4,300), (5,400), (6,500)] # (2,100) is not profitable
-    #sp_c = [(6,0),(5,0),(4,0),(3,0),(2,0),] # (2,100) is not profitable
+
     spp = 12
     sp_c = [(i,0) for i in range(2,spp+1)]
     #print(sp_c)
@@ -330,4 +327,4 @@ if __name__ == '__main__':
         summary_df = summary_df.append(temp_df,ignore_index = True,sort=False)
     
     summary_df.reset_index(inplace=True, drop=True)
-    summary_df.to_csv('Summary.csv',header=True, sep=',', index=False)
+    summary_df.to_csv('Summary_{0}.csv'.format(os.path.basename(__file__)),header=True, sep=',', index=False)

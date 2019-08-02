@@ -12,7 +12,7 @@ vix_file = 'VIX_data.csv'
 index = 'NIFTY 50'
 index_option = 'NIFTY'
 index_lot = 75
-start_date = date(2019,7,1)
+start_date = date(2019,2,1)
 
 #sp_nearer = 50
 sp_nearer = 100
@@ -457,5 +457,5 @@ if __name__ == '__main__':
 #        summary_df = summary_df.append(temp_df,ignore_index = True,sort=False)
 #    
 #    summary_df.reset_index(inplace=True, drop=True)
-#    summary_df.to_csv('Summary.csv',header=True, sep=',', index=False)
+#    summary_df.to_csv('Summary_{0}.csv'.format(os.path.basename(__file__)),header=True, sep=',', index=False)
     
