@@ -61,3 +61,7 @@ zip.zip
 
 # vim
 *.swp
+
+
+NOT NEEDED/
+.ipynb_checkpoints
