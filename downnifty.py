@@ -433,7 +433,8 @@ def buy_vertical(days_window):
     #batches_df['IndexChange']  = batches_df['IndexChange'].apply(lambda x: round(x,2))
     #batches_df['Index%Change']  = batches_df['Index%Change'].apply(lambda x: round(x,2))
     
-    batches_df.to_csv('{0}_batch_by_{1}.csv'.format(index,return_dayname(days_window)),header=True, sep=',', index=False)
+    
+    batches_df.to_csv('{0}_output_lag-{1}.csv'.format(index,return_dayname(days_window)),header=True, sep=',', index=False)
     options_df.to_csv(option_file, header=True, sep=',', index=False)
     
     #sum_df = batches_df[batches_df['Flag'] == 'E']
@@ -457,5 +458,5 @@ if __name__ == '__main__':
 #        summary_df = summary_df.append(temp_df,ignore_index = True,sort=False)
 #    
 #    summary_df.reset_index(inplace=True, drop=True)
-#    summary_df.to_csv('Summary_{0}.csv'.format(os.path.basename(__file__)),header=True, sep=',', index=False)
+#    summary_df.to_csv('Summary_output_{0}.csv'.format(os.path.basename(__file__)),header=True, sep=',', index=False)
     

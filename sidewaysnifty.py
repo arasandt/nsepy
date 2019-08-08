@@ -12,7 +12,7 @@ vix_file = 'VIX_data.csv'
 index = 'NIFTY 50'
 index_option = 'NIFTY'
 index_lot = 75
-start_date = date(2019,2,1)
+start_date = date(2018,10,8)
 
 sp_nearer = 100
 options_df = None
@@ -176,10 +176,11 @@ def return_dayname(day):
                '4': 'Monday',
                '5': 'Friday',
                '6': 'Thursday-1'}
-    if day not in dayname.keys():
-        return day
-    else:
-        return dayname[day]
+    return 'lag_{0}'.format(day)
+    #if day not in dayname.keys():
+    #    return day
+    #else:
+    #    return dayname[day]
 
 
 def spread_combo(days_window, sp_spread):    
@@ -322,9 +323,9 @@ if __name__ == '__main__':
     
     for i, j in sp_c:
         temp_df = None
-        print('\nWorking on window {0} & spread {1}\n'.format(str(i), str(j)))
+        print('Working on window {0} & spread {1}\n'.format(str(i), str(j)))
         temp_df = spread_combo(i,j)
         summary_df = summary_df.append(temp_df,ignore_index = True,sort=False)
     
     summary_df.reset_index(inplace=True, drop=True)
-    summary_df.to_csv('Summary_{0}.csv'.format(os.path.basename(__file__)),header=True, sep=',', index=False)
+    summary_df.to_csv('Summary_output_{0}.csv'.format(os.path.basename(__file__)),header=True, sep=',', index=False)
