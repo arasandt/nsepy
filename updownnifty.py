@@ -12,7 +12,7 @@ vix_file = 'VIX_data.csv'
 index = 'NIFTY 50'
 index_option = 'NIFTY'
 index_lot = 75
-start_date = date(2019,2,1)
+start_date = date(2019,5,1)
 
 #sp_nearer = 50
 sp_nearer = 100
@@ -47,6 +47,8 @@ def load_expiry_dates():
     #df1_grp.reset_index(inplace=True,drop=True)
     #df1_grp.drop(['Prev. Close','Change','Open','High','Low', '% Change'], axis=1, inplace=True)
     
+    #print(df1_grp.tail())
+
     df2 = df[df['ExpiryDate'] > pd.Timestamp(index_cutoff_date)]
     df2 = df2[df2.ExpiryDate != '2019-06-21']
     df2 = df2[df2.ExpiryDate != '2019-03-15']
@@ -56,14 +58,22 @@ def load_expiry_dates():
     
     #print(df1_grp.tail())
     #print(df2.head())
-    
+
     df.drop(['ExpiryMonth'], axis=1, inplace=True)
     #print(df.head())
     #print(df.tail())
     df = df[df['ExpiryDate'] >= pd.Timestamp(start_date)]
-    #print(df.head())
-    
+
     return df
+    #df['ExpiryMonth'] = df['ExpiryDate'].apply(lambda x: str(x.year) + '-' + str(x.month) )
+    #df_grp = df.groupby(['ExpiryMonth']).last()
+    
+    #print(df.tail())
+
+    
+    
+    #return df_grp
+    
 
 
 
@@ -191,134 +201,11 @@ def return_dayname(day):
     
 
 
-def spread_combo(days_window, sp_spread):    
-    #refresh_expiry_dates()
-    expdt_df = load_expiry_dates()
-    
-    expdt_df = expdt_df[expdt_df.ExpiryDate != '2019-06-21']
-    expdt_df = expdt_df[expdt_df.ExpiryDate != '2019-03-15']
-
-    expdt_df.reset_index(inplace=True, drop=True)
-    #print(expdt_df.head())
-    #print(expdt_df.count())
-
-    index_df = load_index_data(days_window)
-    index_df.reset_index(inplace=True,drop=True)
-    #print(index_df.head())
-
-    vix_df = load_vix()
-    vix_df.reset_index(inplace=True,drop=True)
-    #print(vix_df.head())
-    
-    global options_df
-    
-    options_df = load_option_prices()
-    index_df.reset_index(inplace=True,drop=True)
-    
-    index_df = pd.merge(index_df,vix_df,on='Date',how='left')
-    #print(index_df.head(5))
-
-    
-    expdt_df = expdt_df[expdt_df['ExpiryDate'] <= index_df['Date'].max()]
-    #print(expdt_df.count())
-    
-    batch_num = 1
-    batches_df = pd.DataFrame(columns=['Date', 'Close', 'BatchNumber'])
-    
-    for i in range(len(expdt_df)):
-        edt = expdt_df['ExpiryDate'].iloc[i]                
-        #strikeprice = int(myround(stockprice,base=stock[2]))
-        key = index_df[index_df['Date']==edt].index.values.astype(int)[0]
-        #print(key)
-        if key - days_window + 1 >= 0:
-            index_window_df = index_df[key-days_window+1:key+1].copy()
-            index_window_df['BatchNumber'] = batch_num
-            index_window_df['ExpiryDay'] = edt
-            index_window_df['StrikePrice'] = int(myround(index_window_df['Close'].iloc[0],sp_nearer))
-            index_window_df.reset_index(inplace=True, drop=True)
-        #print(index_window_df.head())
-        #index_window_dict = index_window_df.to_dict()
-        #batches_df.append(pd.DataFrame.from_dict(index_window_dict))
-            batches_df = batches_df.append(index_window_df,ignore_index = True,sort=False)
-        
-        #print(batches_df.head())
-        #index_window_dict['batchnumber'] = batch_num
-        #print(index_window_dict)
-        #break
-        
-        batch_num += 1
-    
-    #batches_df = batches_df[['Date','BatchNumber','Close','ExpiryDay']]
-    
-    batches_df['PutStrikePrice'] = batches_df['StrikePrice'] - (sp_spread // 2)
-    batches_df['CallStrikePrice'] = batches_df['StrikePrice'] + (sp_spread // 2)
-    
-    #batches_df.to_csv(index + '_batch_by_' + str(days_window) +'.csv',header=True, sep=',', index=False)
-    batches_df.reset_index(inplace=True,drop=True)
-    #print(batches_df.head())
-    #print(len(batches_df))
-    
-    #batches_df['PutPrice'] = batches_df.apply(price_from_dump,  axis=1, args=['PE'])
-    
-    batches_df['PutPrice'] = batches_df.apply(options_get_history,  axis=1, args=['PE'])
-    batches_df['CallPrice'] = batches_df.apply(options_get_history,  axis=1, args=['CE'])
-    
-    
-    
-    batches_df['TotalPrice'] = batches_df['PutPrice'] + batches_df['CallPrice']
-    
-    #print(batches_df.head())
-    
-    
-    batches_df['Premium'] = round((batches_df['PutPrice'] + batches_df['CallPrice']) * index_lot, 2)
-    
-    
-    cal_premium = []
-    cal_ix_change = []
-    cal_ix_pchange = []
-    for i in range(len(batches_df)):
-        if (i+1) % days_window == 1:
-            first_pre = batches_df['Premium'].iloc[i]
-            first_ic = batches_df['Close'].iloc[i]
-        cal_premium.append(first_pre - batches_df['Premium'].iloc[i])
-        cal_ix_change.append(batches_df['Close'].iloc[i] - first_ic)
-        cal_ix_pchange.append((batches_df['Close'].iloc[i] - first_ic) * 100 / batches_df['Close'].iloc[i])
-            
-    #print(cal_pre)
-    batches_df['Profit'] = cal_premium
-    batches_df['IndexChange'] = cal_ix_change
-    batches_df['Index%Change'] = cal_ix_pchange
-    
-    
-    batches_df['Flag'] = ''
-    
-    #batches_df['Flag'] = batches_df.apply(lambda x: 'E' if (x['Date'] == x['ExpiryDay']) else '', axis=1)
-    
-    batches_df.loc[batches_df.groupby('BatchNumber')['Flag'].head(1).index, 'Flag'] = 'S'
-    batches_df.loc[batches_df.groupby('BatchNumber')['Flag'].tail(1).index, 'Flag'] = 'E'
-    
-    batches_df = batches_df[(batches_df['PutPrice'] != 0) & (batches_df['CallPrice'] != 0)]
-    
-    #batches_df['ExpiryFlag'] = batches_df.apply(lambda x: 'Y' if (x['Date'] == x['ExpiryDay']) else '', axis=1)
-    
-    batches_df['TotalPrice'] = batches_df['TotalPrice'].apply(lambda x: round(x,2))
-    batches_df['Premium'] = batches_df['Premium'].apply(lambda x: round(x,2))
-    batches_df['Profit'] = batches_df['Profit'].apply(lambda x: round(x,2))
-    batches_df['IndexChange']  = batches_df['IndexChange'].apply(lambda x: round(x,2))
-    batches_df['Index%Change']  = batches_df['Index%Change'].apply(lambda x: round(x,2))
-    
-    batches_df.to_csv('{0}_batch_by_{1}_spread_by_{2}.csv'.format(index,return_dayname(days_window),str(sp_spread)),header=True, sep=',', index=False)
-    options_df.to_csv(option_file, header=True, sep=',', index=False)
-    
-    sum_df = batches_df[batches_df['Flag'] == 'E']
-    sum_df = sum_df[['Date','Profit']]
-    sum_df['WindowSpread'] = '{0}_{1}'.format(return_dayname(days_window),str(sp_spread))
-    return sum_df
 
 
 
 def buy_vertical(days_window):
-    #refresh_expiry_dates()
+    refresh_expiry_dates()
     expdt_df = load_expiry_dates()
     
     expdt_df = expdt_df[expdt_df.ExpiryDate != '2019-06-21']
@@ -346,7 +233,10 @@ def buy_vertical(days_window):
 
     
     expdt_df = expdt_df[expdt_df['ExpiryDate'] <= index_df['Date'].max()]
-    #print(expdt_df.count())
+
+    print(expdt_df.head())
+
+    #return
     
     batch_num = 1
     batches_df = pd.DataFrame(columns=['Date', 'Close', 'BatchNumber'])
@@ -396,7 +286,7 @@ def buy_vertical(days_window):
     #print(batches_df.head())
     
     
-    batches_df['Premium'] = round((batches_df['PutPrice'] + batches_df['CallPrice']) * index_lot, 2)
+    batches_df['Investment'] = round((batches_df['PutPrice'] + batches_df['CallPrice']) * index_lot, 2)
     
     
 #    cal_premium = []
@@ -428,13 +318,13 @@ def buy_vertical(days_window):
     #batches_df['ExpiryFlag'] = batches_df.apply(lambda x: 'Y' if (x['Date'] == x['ExpiryDay']) else '', axis=1)
     
     batches_df['TotalPrice'] = batches_df['TotalPrice'].apply(lambda x: round(x,2))
-    batches_df['Premium'] = batches_df['Premium'].apply(lambda x: round(x,2))
+    batches_df['Investment'] = batches_df['Investment'].apply(lambda x: round(x,2))
     #batches_df['Profit'] = batches_df['Profit'].apply(lambda x: round(x,2))
     #batches_df['IndexChange']  = batches_df['IndexChange'].apply(lambda x: round(x,2))
     #batches_df['Index%Change']  = batches_df['Index%Change'].apply(lambda x: round(x,2))
     
     
-    batches_df.to_csv('{0}_output_lag-{1}.csv'.format(index,return_dayname(days_window)),header=True, sep=',', index=False)
+    batches_df.to_csv('{0}_output_lead-{1}.csv'.format(index,return_dayname(days_window)),header=True, sep=',', index=False)
     options_df.to_csv(option_file, header=True, sep=',', index=False)
     
     #sum_df = batches_df[batches_df['Flag'] == 'E']
@@ -444,7 +334,7 @@ def buy_vertical(days_window):
     
 
 if __name__ == '__main__':
-    buy_vertical(30)
+    buy_vertical(5)
     #days_window, sp_spread = 2, 100
     #sp_c = [(2,100), (3,200), (4,300), (5,400), (6,500)]
 #    sp_c = [(3,200), (4,300), (5,400), (6,500)] # (2,100) is not profitable
