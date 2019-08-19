@@ -12,7 +12,7 @@ vix_file = 'VIX_data.csv'
 index = 'NIFTY 50'
 index_option = 'NIFTY'
 index_lot = 75
-start_date = date(2019,5,1)
+start_date = date(2018,9,1)
 
 #sp_nearer = 50
 sp_nearer = 100

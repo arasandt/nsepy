@@ -314,8 +314,8 @@ def spread_combo(days_window, sp_spread):
 
 if __name__ == '__main__':
 
-    spp = 12
-    sp_c = [(i,0) for i in range(11,spp+1)]
+    spp = 9
+    sp_c = [(i,0) for i in range(2,spp+1)]
     #print(sp_c)
     
     
