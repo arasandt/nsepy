@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from __future__ import print_function
 from datetime import datetime, date
-from nsepy import get_history
+#from nsepy import get_history
 
 import pandas as pd
 import os
@@ -14,7 +14,7 @@ index_option = 'NIFTY'
 index_lot = 75
 start_date = date(2018,10,8)
 
-sp_nearer = 100
+sp_nearer = 50
 options_df = None
 
 def refresh_expiry_dates():
@@ -246,7 +246,9 @@ def spread_combo(days_window, sp_spread):
     #batches_df = batches_df[['Date','BatchNumber','Close','ExpiryDay']]
     
     batches_df['PutStrikePrice'] = batches_df['StrikePrice'] - (sp_spread // 2)
-    batches_df['CallStrikePrice'] = batches_df['StrikePrice'] + (sp_spread // 2)
+    batches_df['PutStrikePrice'] = batches_df['PutStrikePrice'].apply(lambda x: int(myround(x, sp_nearer)))
+    #batches_df['CallStrikePrice'] = batches_df['StrikePrice'] + (sp_spread // 2)
+    batches_df['CallStrikePrice'] = batches_df['PutStrikePrice'] + sp_spread
     
     #batches_df.to_csv(index + '_batch_by_' + str(days_window) +'.csv',header=True, sep=',', index=False)
     batches_df.reset_index(inplace=True,drop=True)
@@ -318,7 +320,7 @@ if __name__ == '__main__':
     sp_c = [(i,0) for i in range(2,spp+1)]
     #print(sp_c)
     
-    
+    sp_c = [(6,0),(6,50),(6,150),(6,200),(6,250),(7,0),(7,50),(7,150),(7,200),(7,250),(8,0),(8,50),(8,150),(8,200),(8,250),(9,0),(9,50),(9,150),(9,200),(9,250),]
     summary_df = pd.DataFrame(columns=['WindowSpread','Date', 'Profit'])
     
     for i, j in sp_c:
