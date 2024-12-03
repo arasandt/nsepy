@@ -5,6 +5,9 @@ import pandas as pd
 import calendar
 import datetime
 
+# from nsepy import get_history
+from urllib.parse import quote, urlencode, quote_plus
+
 lookback_in_months = 12
 nifty_json_data = "nifty.json"
 
@@ -54,7 +57,7 @@ def parse_nifty_data_to_dataframe():
 
 
 def get_next_or_same_thursday(input_date):
-    days_ahead = 3 - input_date.weekday()  # Thursday is 3
+    days_ahead = 2 - input_date.weekday()  # Thursday is 3
     if days_ahead < 0:  # Target day already happened this week
         days_ahead += 7
     return input_date + datetime.timedelta(days=days_ahead)
@@ -111,5 +114,26 @@ if __name__ == "__main__":
     df = parse_nifty_data_to_dataframe()
     df = select_expiry_dates(df)
 
-    print(df.head())
+    print(df.tail())
     df.to_csv("data.csv", header=True, index=False)
+
+    # nifty_opt_puts = get_history(
+    #     symbol="NIFTY",
+    #     start=datetime.datetime.strptime("2024-11-29", "%Y-%m-%d"),
+    #     end=datetime.datetime.strptime("2024-12-02", "%Y-%m-%d"),
+    #     index=True,
+    #     option_type="PE",
+    #     strike_price=24100,
+    #     expiry_date=datetime.datetime.strptime("2024-12-05", "%Y-%m-%d"),
+    # )
+
+    base_url = "https://www.nseindia.com/api/reports"
+    archives = (
+        quote(r'[{"name":"F&O - Bhavcopy ')
+        + "(fo.zip)"
+        + quote(r'","type":"archives","category":"derivatives","section":"equity"}]')
+    )
+    url = f"{base_url}?archives={archives}&date=25-Nov-2024&type=equity&mode=single"
+    print(url)
+    df = pd.read_csv("")
+    # print(nifty_opt_puts)
