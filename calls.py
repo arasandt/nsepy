@@ -1,4 +1,5 @@
 import requests
+import math
 import json
 import pandas as pd
 import calendar
@@ -43,6 +44,7 @@ def parse_nifty_data_to_dataframe():
     df["date"] = df["unixtimestamp"].apply(
         lambda x: datetime.datetime.fromtimestamp((x))
     )
+    df["date"] = pd.to_datetime(df["date"]).dt.normalize()
     df["high"] = data["chart"]["result"][0]["indicators"]["quote"][0]["high"]
     df["low"] = data["chart"]["result"][0]["indicators"]["quote"][0]["low"]
     df["close"] = data["chart"]["result"][0]["indicators"]["quote"][0]["close"]
@@ -56,6 +58,22 @@ def get_next_or_same_thursday(input_date):
     if days_ahead < 0:  # Target day already happened this week
         days_ahead += 7
     return input_date + datetime.timedelta(days=days_ahead)
+
+
+def add_first_close_price(df):
+    # Create a new column with first close price for each expiry group
+    first_close = df.groupby("expirydate")["close"].transform("first")
+    first_close_date = df.groupby("expirydate")["date"].transform("first")
+    df["firstclose"] = first_close
+    df["firstclosedate"] = first_close_date
+    return df
+
+
+def conditional_round_100(x):
+    remainder = x % 100
+    if remainder >= 50:
+        return math.ceil(x / 100) * 100
+    return math.floor(x / 100) * 100
 
 
 def select_expiry_dates(df):
@@ -81,6 +99,9 @@ def select_expiry_dates(df):
 
     df["expirydate"] = df["expirydate"].apply(lambda x: x.date())
     df["thursdays"] = df["thursdays"].apply(lambda x: x.date())
+
+    df = add_first_close_price(df)
+    df["strikeprice"] = df["firstclose"].apply(conditional_round_100)
 
     return df
 
