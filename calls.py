@@ -135,5 +135,5 @@ if __name__ == "__main__":
     )
     url = f"{base_url}?archives={archives}&date=25-Nov-2024&type=equity&mode=single"
     print(url)
-    df = pd.read_csv("")
+    # df = pd.read_csv("")
     # print(nifty_opt_puts)
