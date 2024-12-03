@@ -158,7 +158,7 @@ def download_and_extract_zip(url, extract_path):
 def add_downloaded_info(df):
     is_downloaded = []
     filenames = []
-    cleanded_filenames = []
+    cleaned_filenames = []
     for row in df.iterrows():
         file_name = f"op{row[1]['date'].strftime('%d%m%y')}.csv"
         cleaned_file_name = f"op{row[1]['date'].strftime('%d%m%y')}_cleaned.csv"
@@ -171,14 +171,14 @@ def add_downloaded_info(df):
                 file_df = file_df[file_df["CONTRACT_D"].str.contains("OPTIDXNIFTY")]
                 file_df = file_df[~file_df["CONTRACT_D"].str.contains("OPTIDXNIFTYNXT")]
                 file_df.to_csv(os.path.join(fo_dir, cleaned_file_name), index=False)
-            cleanded_filenames.append(cleaned_file_name)
+            cleaned_filenames.append(cleaned_file_name)
         else:
             is_downloaded.append(False)
-            cleanded_filenames.append("NA")
+            cleaned_filenames.append("NA")
         filenames.append(file_name)
 
     df["downloaded_filename"] = filenames
-    df["cleaned_filename"] = filenames
+    df["cleaned_filename"] = cleaned_filenames
     df["downloaded"] = is_downloaded
 
     return df
