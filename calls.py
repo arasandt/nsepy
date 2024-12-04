@@ -227,16 +227,20 @@ def download_options_chain(row):
 def add_strike_price_data(df):
     strike_price_call = []
     strike_price_put = []
+    strike_price_call_name = []
+    strike_price_put_name = []
+    df["strike_price_call_name"] = 0
     df["strike_price_call"] = 0
+    df["strike_price_put_name"] = 0
     df["strike_price_put"] = 0
     for row in df.iterrows():
+        put_option_name = f"OPTIDXNIFTY{row[1]['expirydate'].strftime('%d-%b-%Y').upper()}PE{row[1]['strikeprice']}"
+        call_option_name = f"OPTIDXNIFTY{row[1]['expirydate'].strftime('%d-%b-%Y').upper()}CE{row[1]['strikeprice']}"
         if row[1]["downloaded"]:
             file_name = os.path.join(fo_dir, row[1]["cleaned_filename"])
             if os.path.exists(file_name):
                 file_df = pd.read_csv(file_name)
                 # print(row[1])
-                put_option_name = f"OPTIDXNIFTY{row[1]['expirydate'].strftime('%d-%b-%Y').upper()}PE{row[1]['strikeprice']}"
-                call_option_name = f"OPTIDXNIFTY{row[1]['expirydate'].strftime('%d-%b-%Y').upper()}CE{row[1]['strikeprice']}"
                 try:
                     put_option_price = file_df[
                         file_df["CONTRACT_D"] == put_option_name
@@ -258,8 +262,14 @@ def add_strike_price_data(df):
             strike_price_call.append(0)
             strike_price_put.append(0)
 
+        strike_price_call_name.append(call_option_name)
+        strike_price_put_name.append(put_option_name)
+
+    df["strike_price_call_name"] = strike_price_call_name
     df["strike_price_call"] = strike_price_call
+    df["strike_price_put_name"] = strike_price_put_name
     df["strike_price_put"] = strike_price_put
+    df["position_price"] = df["strike_price_call"] + df["strike_price_put"]
     return df
 
 
