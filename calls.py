@@ -210,7 +210,7 @@ def run():
     df = add_downloaded_info(df)
 
     print(df.tail())
-    df.to_csv("data.csv", header=True, index=False)
+    df.to_csv("NIFTY_data.csv", header=True, index=False)
 
 
 if __name__ == "__main__":
