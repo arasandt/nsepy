@@ -136,16 +136,21 @@ def download_and_extract_zip(url, extract_path):
     ua = UserAgent()
     headers = {
         "User-Agent": ua.random,
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
         "Accept-Language": "en-US,en;q=0.9",
-        "Accept-Encoding": "gzip, deflate, br",
+        "Accept-Encoding": "gzip, deflate, br, zstd",
+        "Prioriy": "u=0, i",
         "Connection": "keep-alive",
         "Cache-Control": "max-age=0",
+        "Sec-ch-ua": '"Microsoft Edge";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
+        "Sec-ch-ua-platform": '"Windows"',
         "Sec-Fetch-Site": "none",
         "Sec-Fetch-Mode": "navigate",
         "Sec-Fetch-User": "?1",
         "Sec-Fetch-Dest": "document",
         "Upgrade-Insecure-Requests": "1",
+        "User-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0",
+        # "Cookie": '_ga=GA1.1.344521966.1731251502; defaultLang=en; AKA_A2=A; nsit=pR6P8iFtVz7wg15U2e6p-g0t; nseappid=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJhcGkubnNlIiwiYXVkIjoiYXBpLm5zZSIsImlhdCI6MTczMzMyNjI0MCwiZXhwIjoxNzMzMzMzNDQwfQ.wwfqIQU5YmAts-lGyDh5-aTHBff2hVsNyLIjesqNyP8; bm_mi=DAAF7707D66AF0D253A8293B57642681~YAAQJgosF4FcmSeTAQAAJ35LkhqsooFvruDNzIKI+mpcMVy/3EsPeKNOfx+0D2bYKhazs7QelI2hsG1HhKqK3cbRoaU3ADvnLVSXCoGFC2kXSNG7/hucvlgykpoecDt98O85cLjYgnbKnuzpezjiJJO9KkWgXTa7KzU9unyeTDel1oaJhfVBUw2F52YWpeqxmBdyrmCv2Y1Yz+PJlRgA0nJbI7D7wOsZV59nMcIlSZR9RIwafXc9xXXjHsroFJNPPxVCzPtrZ0adAF0efq9DKYRGREjXYpPRYwauSnjwkIOPCP4TEpPAEAOQgGAWwVE=~1; _ga_87M7PJ3R97=GS1.1.1733326242.13.1.1733326242.60.0.0; _ga_WM2NSQKJEK=GS1.1.1733326242.13.0.1733326242.0.0.0; ak_bmsc=69041F58A5D9BACBAAFA96360BB6CD5D~000000000000000000000000000000~YAAQJgosFxFdmSeTAQAAYYRLkhrS5FFuGeIq17U4xOoDkba/2PCpEyXoNidCWv1i2LXDFiO6k2Dn6N/q2Zds73e5OaMRdV5lgTY3JsRr3aGRbaG8EB+vM6cEmhUM8fKRpFxd3OlHywoN9AG64YUdNIcGQ5RM31qMj2C9lOiPcd6Q3VXRGGFOGNJR7SaNL8zvcDjKEUmUD61+7YmGWvS5D9GXupmq+/kd07PHz6jDA1uk3uWhytfC2JW7qnk/utixkA/TKn0FpVRmpfnq3b5+SVMgrTB246lVJwonBPrQYJTGS6+iM4tKjJ0LDS2C2FwU57URYlaLassOs+gZBA907O/PRgsjyoOkvaUQ2I9/6jFP2LNMcTASyvOpMX6OLDiJ8SEU6S+uejC2J62Xws5N1Mn6AfgeE/nAl9kCVxUnD4xcN1sak0iDQ6a+IMvrY/Z8yxs88HpFGIYIq7wXFkQid5D9sLRJRzYda6pRlqKa3w==; bm_sz=C8E939D669E85D1E2683F2C26C59836C~YAAQJgosF0YqmieTAQAAnvZXkhpUt7/cA9pLc9lCBN8RIZc+gGLUHhnUYOlM237RyVWsCKB8DjiO3JQMW2H518JF0UiEre6XZdKXjRIaWMquygJPdVcO/vgnuMI7dKqMmsg8RKQ6e0F0lOTKmiu0fdOnfBtV9CKRGrX2XwFgL2m6qXeGbzBYVcXvs1Lqmv6ck1tr4vWsAsluXtWHeo13JA/LouDLL+1/C0oJ0gHBMqLxpnzjadL+QHoCqoG1P07V1LEamBN7Tq3z1VlGQ+Lwts1IFLh7Y1n+gT7jTFXOfgNIa6TWiRBUJ/wu5Y8FBkdxQjur+Xm/AyM0MvsNGCkV137cKZR+8Jy9GVIKySJGuMp8+qxAxAFGoBt930BbzMzJuPzMdVKL70nxNr2shQE4UxrlXtyOrgRl6ojFNFRiDFWk48amDuef~4602162~4338244; _abck=AEEE8321135827883310C0ADD706330D~0~YAAQJgosF8xAmieTAQAAFrVZkg0RCq2MCq1I24XqqACyDihYAEvLJhme4YlXeOo424SevRhlvMOw4NjlcxKM4jjeoqbJLuNuz/AiJdKqkfxzB3mY2qOUOWeJPKVrtRIeeJ37qMV0TULw/prHI8+NoZFlwG/fj5xy8pTYA8FHPgKNAt85M+hAQ5zvJuIgMhrdTwmw3inSGNDiBcEyE/DKzP2OuHHRlcWYZ2Jd/eK/kinVxmmajTy2uI9WJJ/f6pKVmtZv+/eXcT8O7doeuacwcSA4oDyjRYkIfAOdZJgKVlIKRVL/JVlXgLzNGnX4gNhWwT4pVvMnOtFV2OawkkDwUzSrKCNyM50RoeRJTO3AVqyy+8da6Ijazwk5isnY9QFuNsfyVrUquq1QGQTaDYC27c0qn1uqnhUk2pYnZR2UTIrOAqQuxBnVkLbJp1eS4KDP0Og+oH8fSNS/~-1~-1~-1; bm_sv=D6B4850E4102CFFFD4549C3826F5D5D7~YAAQJgosF81AmieTAQAAFrVZkhox+BNAFOSA/3RiyGGIU9DFfaa4kKYDUGX6CSV2Azvh73343JJfFhe0xbE/lVnsAT0Gsm/vwq0cwduLg7f5H4Jmyu1IXhvTluYbaxx7po1+unVZn6IpSwUcO4HO0NPAXilvkao7E3mcb7qFwZdn6Cbc5lPRLboCgul1pRpRwbE7S192S6EfQw0InJIpGEjRdn47A9w5cP7at7XYRBE0pBbfA9yIEz5LBPy6eLqA1VhM~1; RT="z=1&dm=nseindia.com&si=0efd09cc-a954-447b-ac77-3cc0cfadc029&ss=m4a1ov1u&sl=0&se=8c&tt=0&bcn=%2F%2F684d0d48.akstat.io%2F&ul=k17v"',
     }
 
     # First get the cookies from NSE homepage
@@ -161,7 +166,7 @@ def download_and_extract_zip(url, extract_path):
         # Now download the file using the same session
         if response.status_code == 200:
             response = session.get(url, headers=headers, timeout=(5, 30), stream=True)
-
+            print(url)
             if response.ok:
                 # print("Extracting files")
                 z = zipfile.ZipFile(io.BytesIO(response.content))
@@ -182,7 +187,9 @@ def add_downloaded_info(df):
     filenames = []
     cleaned_filenames = []
     for row in df.iterrows():
+
         file_name = f"op{row[1]['date'].strftime('%d%m%y')}.csv"
+        # print(f"Working on {file_name}")
         cleaned_file_name = f"op{row[1]['date'].strftime('%d%m%y')}_cleaned.csv"
         if os.path.exists(os.path.join(fo_dir, file_name)):
             is_downloaded.append(True)
@@ -195,6 +202,7 @@ def add_downloaded_info(df):
                 file_df.to_csv(os.path.join(fo_dir, cleaned_file_name), index=False)
             cleaned_filenames.append(cleaned_file_name)
         else:
+            # print("Downloading Option Chain")
             download_options_chain(row[1]["date"])
             if os.path.exists(os.path.join(fo_dir, file_name)):
                 is_downloaded.append(True)
@@ -337,19 +345,21 @@ def run():
     df = select_expiry_dates(df)
     df = add_downloaded_info(df)
 
-    # df = add_strike_price_data(df)
+    df = add_strike_price_data(df)
 
-    # print(df.tail())
-    # df.to_csv("NIFTY_data.csv", header=True, index=False)
+    print(df.tail())
+    count_df = df.groupby(df["date"].dt.month)["downloaded"].sum().reset_index()
+    print(count_df.head(300))
+    df.to_csv("NIFTY_data.csv", header=True, index=False)
 
 
 if __name__ == "__main__":
+    run()
+    # for i in range(1000):
+    # try:
     # run()
-    for i in range(1000):
-        try:
-            run()
-        except Exception as e:
-            print(e)
-            pass
-        print(f"{i+1} : Waiting for 30 seconds and trying again")
-        time.sleep(30)
+    # except Exception as e:
+    # print(e)
+    # pass
+    # print(f"{i+1} : Waiting for 30 seconds and trying again")
+    # time.sleep(30)
