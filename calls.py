@@ -9,6 +9,8 @@ import datetime
 import zipfile
 import io
 from fake_useragent import UserAgent
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 # from nsepy import get_history
 from urllib.parse import quote, urlencode, quote_plus
@@ -18,6 +20,19 @@ nifty_json_data = "nifty.json"
 
 fo_dir = "fo"
 os.makedirs(fo_dir, exist_ok=True)
+
+
+def create_session_with_retry():
+    session = requests.Session()
+    retry_strategy = Retry(
+        total=3,  # number of retries
+        backoff_factor=1,  # wait 1, 2, 4 seconds between retries
+        status_forcelist=[429, 500, 502, 503, 504],
+    )
+    adapter = HTTPAdapter(max_retries=retry_strategy)
+    session.mount("https://", adapter)
+    session.mount("http://", adapter)
+    return session
 
 
 def add_months(sourcedate, months):
@@ -95,7 +110,7 @@ def select_expiry_dates(df):
     thursdays = pd.Series(df["thursdays"].unique())
 
     # Create a mapping series
-    date_mapping = pd.Series(index=thursdays)
+    date_mapping = pd.Series(index=thursdays, dtype="datetime64[ns]")
 
     for thursday in thursdays:
         # Find the closest previous date that exists
@@ -134,25 +149,30 @@ def download_and_extract_zip(url, extract_path):
     }
 
     # First get the cookies from NSE homepage
-    time.sleep(2)
-    session = requests.Session()
+    session = create_session_with_retry()
     # print("Getting Cookies")
-    response = session.get("https://www.nseindia.com", headers=headers, timeout=30)
-    time.sleep(2)
+    try:
+        response = session.get(
+            "https://www.nseindia.com", headers=headers, timeout=(5, 30)
+        )
+        time.sleep(2)
 
-    # Now download the file using the same session
-    if response.status_code == 200:
-        response = session.get(url, headers=headers, timeout=30)
+        # Now download the file using the same session
+        if response.status_code == 200:
+            response = session.get(url, headers=headers, timeout=(5, 30), stream=True)
 
-        if response.ok:
-            # print("Extracting files")
-            z = zipfile.ZipFile(io.BytesIO(response.content))
-            file_list = z.namelist()
-            op_files = [f for f in file_list if f.lower().startswith("op")]
-            for file in op_files:
-                z.extract(file, extract_path)
-            z.close()
-            return True
+            if response.ok:
+                # print("Extracting files")
+                z = zipfile.ZipFile(io.BytesIO(response.content))
+                file_list = z.namelist()
+                op_files = [f for f in file_list if f.lower().startswith("op")]
+                for file in op_files:
+                    z.extract(file, extract_path)
+                z.close()
+                return True
+    except requests.exceptions.RequestException as e:
+        print(f"Error downloading: {str(e)}")
+        time.sleep(5)  # Wait before retry
     return False
 
 
