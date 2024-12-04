@@ -134,9 +134,10 @@ def download_and_extract_zip(url, extract_path):
     }
 
     # First get the cookies from NSE homepage
+    time.sleep(2)
     session = requests.Session()
-    print("Getting Cookies")
-    response = session.get("https://www.nseindia.com", headers=headers)
+    # print("Getting Cookies")
+    response = session.get("https://www.nseindia.com", headers=headers, timeout=30)
     time.sleep(2)
 
     # Now download the file using the same session
@@ -173,7 +174,11 @@ def add_downloaded_info(df):
                 file_df.to_csv(os.path.join(fo_dir, cleaned_file_name), index=False)
             cleaned_filenames.append(cleaned_file_name)
         else:
-            is_downloaded.append(False)
+            download_options_chain(row[1]["date"])
+            if os.path.exists(os.path.join(fo_dir, file_name)):
+                is_downloaded.append(True)
+            else:
+                is_downloaded.append(False)
             cleaned_filenames.append("NA")
         filenames.append(file_name)
 
@@ -184,31 +189,36 @@ def add_downloaded_info(df):
     return df
 
 
-if __name__ == "__main__":
-    # download_latest_nifty_data()
+def download_options_chain(row):
+    base_url = "https://www.nseindia.com/api/reports"
+    archives = (
+        quote(r'[{"name":"F&O - Bhavcopy ')
+        + "(fo.zip)"
+        + quote(r'","type":"archives","category":"derivatives","section":"equity"}]')
+    )
+
+    print("Downloading", row.strftime("%d-%b-%Y"))
+    trade_date = row.strftime("%d%b%y")
+    url = f"{base_url}?archives={archives}&date={trade_date}&type=equity&mode=single"
+    download_and_extract_zip(url, fo_dir)
+
+
+def run():
     df = parse_nifty_data_to_dataframe()
     df = select_expiry_dates(df)
+
     df = add_downloaded_info(df)
 
     print(df.tail())
     df.to_csv("data.csv", header=True, index=False)
 
-    # nifty_opt_puts = get_history(
-    #     symbol="NIFTY",
-    #     start=datetime.datetime.strptime("2024-11-29", "%Y-%m-%d"),
-    #     end=datetime.datetime.strptime("2024-12-02", "%Y-%m-%d"),
-    #     index=True,
-    #     option_type="PE",
-    #     strike_price=24100,
-    #     expiry_date=datetime.datetime.strptime("2024-12-05", "%Y-%m-%d"),
-    # )
 
-    # base_url = "https://www.nseindia.com/api/reports"
-    # archives = (
-    #     quote(r'[{"name":"F&O - Bhavcopy ')
-    #     + "(fo.zip)"
-    #     + quote(r'","type":"archives","category":"derivatives","section":"equity"}]')
-    # )
-    # url = f"{base_url}?archives={archives}&date=25-Nov-2024&type=equity&mode=single"
-    # print(url)
-    # download_and_extract_zip(url, fo_dir)
+if __name__ == "__main__":
+    for i in range(1000):
+        try:
+            run()
+        except Exception as e:
+            print(e)
+            pass
+        print(f"{i+1} : Waiting for 30 seconds and trying again")
+        time.sleep(30)
