@@ -80,7 +80,7 @@ def parse_nifty_data_to_dataframe():
 
 
 def get_next_or_same_thursday(input_date):
-    days_ahead = 2 - input_date.weekday()  # Thursday is 3
+    days_ahead = 3 - input_date.weekday()  # Thursday is 3
     if days_ahead < 0:  # Target day already happened this week
         days_ahead += 7
     return input_date + datetime.timedelta(days=days_ahead)
@@ -195,7 +195,7 @@ def add_downloaded_info(df):
                 file_df.to_csv(os.path.join(fo_dir, cleaned_file_name), index=False)
             cleaned_filenames.append(cleaned_file_name)
         else:
-            download_options_chain(row[1]["date"])
+            # download_options_chain(row[1]["date"])
             if os.path.exists(os.path.join(fo_dir, file_name)):
                 is_downloaded.append(True)
             else:
@@ -224,21 +224,63 @@ def download_options_chain(row):
     download_and_extract_zip(url, fo_dir)
 
 
+def add_strike_price_data(df):
+    strike_price_call = []
+    strike_price_put = []
+    df["strike_price_call"] = 0
+    df["strike_price_put"] = 0
+    for row in df.iterrows():
+        if row[1]["downloaded"]:
+            file_name = os.path.join(fo_dir, row[1]["cleaned_filename"])
+            if os.path.exists(file_name):
+                file_df = pd.read_csv(file_name)
+                # print(row[1])
+                put_option_name = f"OPTIDXNIFTY{row[1]['expirydate'].strftime('%d-%b-%Y').upper()}PE{row[1]['strikeprice']}"
+                call_option_name = f"OPTIDXNIFTY{row[1]['expirydate'].strftime('%d-%b-%Y').upper()}CE{row[1]['strikeprice']}"
+                try:
+                    put_option_price = file_df[
+                        file_df["CONTRACT_D"] == put_option_name
+                    ]["CLOSE_PRIC"].values[0]
+                except:
+                    put_option_price = 0
+                try:
+                    call_option_price = file_df[
+                        file_df["CONTRACT_D"] == call_option_name
+                    ]["CLOSE_PRIC"].values[0]
+                except:
+                    call_option_price = 0
+                strike_price_call.append(call_option_price)
+                strike_price_put.append(put_option_price)
+            else:
+                strike_price_call.append(0)
+                strike_price_put.append(0)
+        else:
+            strike_price_call.append(0)
+            strike_price_put.append(0)
+
+    df["strike_price_call"] = strike_price_call
+    df["strike_price_put"] = strike_price_put
+    return df
+
+
 def run():
     df = parse_nifty_data_to_dataframe()
     df = select_expiry_dates(df)
     df = add_downloaded_info(df)
+
+    df = add_strike_price_data(df)
 
     print(df.tail())
     df.to_csv("NIFTY_data.csv", header=True, index=False)
 
 
 if __name__ == "__main__":
-    for i in range(1000):
-        try:
-            run()
-        except Exception as e:
-            print(e)
-            pass
-        print(f"{i+1} : Waiting for 30 seconds and trying again")
-        time.sleep(30)
+    run()
+    # for i in range(1000):
+    #     try:
+    #         run()
+    #     except Exception as e:
+    #         print(e)
+    #         pass
+    #     print(f"{i+1} : Waiting for 30 seconds and trying again")
+    #     time.sleep(30)
