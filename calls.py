@@ -149,7 +149,8 @@ def download_and_extract_zip(url, extract_path):
     }
 
     # First get the cookies from NSE homepage
-    session = create_session_with_retry()
+    session = requests.Session()
+    # session = create_session_with_retry()
     # print("Getting Cookies")
     try:
         response = session.get(
