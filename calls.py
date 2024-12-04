@@ -195,7 +195,7 @@ def add_downloaded_info(df):
                 file_df.to_csv(os.path.join(fo_dir, cleaned_file_name), index=False)
             cleaned_filenames.append(cleaned_file_name)
         else:
-            # download_options_chain(row[1]["date"])
+            download_options_chain(row[1]["date"])
             if os.path.exists(os.path.join(fo_dir, file_name)):
                 is_downloaded.append(True)
             else:
@@ -226,13 +226,21 @@ def download_options_chain(row):
 
 def add_strike_price_data(df):
     strike_price_call = []
+    strike_price_call_high = []
+    strike_price_call_low = []
     strike_price_put = []
+    strike_price_put_high = []
+    strike_price_put_low = []
     strike_price_call_name = []
     strike_price_put_name = []
     df["strike_price_call_name"] = 0
     df["strike_price_call"] = 0
+    df["strike_price_call_high"] = 0
+    df["strike_price_call_low"] = 0
     df["strike_price_put_name"] = 0
     df["strike_price_put"] = 0
+    df["strike_price_put_high"] = 0
+    df["strike_price_put_low"] = 0
     for row in df.iterrows():
         put_option_name = f"OPTIDXNIFTY{row[1]['expirydate'].strftime('%d-%b-%Y').upper()}PE{row[1]['strikeprice']}"
         call_option_name = f"OPTIDXNIFTY{row[1]['expirydate'].strftime('%d-%b-%Y').upper()}CE{row[1]['strikeprice']}"
@@ -248,28 +256,79 @@ def add_strike_price_data(df):
                 except:
                     put_option_price = 0
                 try:
+                    put_option_price_high = file_df[
+                        file_df["CONTRACT_D"] == put_option_name
+                    ]["HIGH_PRICE"].values[0]
+                except:
+                    put_option_price_high = 0
+                try:
+                    put_option_price_low = file_df[
+                        file_df["CONTRACT_D"] == put_option_name
+                    ]["LOW_PRICE"].values[0]
+                except:
+                    put_option_price_low = 0
+
+                try:
                     call_option_price = file_df[
                         file_df["CONTRACT_D"] == call_option_name
                     ]["CLOSE_PRIC"].values[0]
                 except:
                     call_option_price = 0
+                try:
+                    call_option_price_high = file_df[
+                        file_df["CONTRACT_D"] == call_option_name
+                    ]["HIGH_PRICE"].values[0]
+                except:
+                    call_option_price_high = 0
+                try:
+                    call_option_price_low = file_df[
+                        file_df["CONTRACT_D"] == call_option_name
+                    ]["LOW_PRICE"].values[0]
+                except:
+                    call_option_price_low = 0
+
                 strike_price_call.append(call_option_price)
+                strike_price_call_high.append(call_option_price_high)
+                strike_price_call_low.append(call_option_price_low)
+
                 strike_price_put.append(put_option_price)
+                strike_price_put_high.append(put_option_price_high)
+                strike_price_put_low.append(put_option_price_low)
             else:
                 strike_price_call.append(0)
+                strike_price_call_high.append(0)
+                strike_price_call_low.append(0)
+
                 strike_price_put.append(0)
+                strike_price_put_high.append(0)
+                strike_price_put_low.append(0)
         else:
             strike_price_call.append(0)
+            strike_price_call_high.append(0)
+            strike_price_call_low.append(0)
+
             strike_price_put.append(0)
+            strike_price_put_high.append(0)
+            strike_price_put_low.append(0)
 
         strike_price_call_name.append(call_option_name)
         strike_price_put_name.append(put_option_name)
 
     df["strike_price_call_name"] = strike_price_call_name
     df["strike_price_call"] = strike_price_call
+    df["strike_price_call_high"] = strike_price_call_high
+    df["strike_price_call_low"] = strike_price_call_low
     df["strike_price_put_name"] = strike_price_put_name
     df["strike_price_put"] = strike_price_put
+    df["strike_price_put_high"] = strike_price_put_high
+    df["strike_price_put_low"] = strike_price_put_low
     df["position_price"] = df["strike_price_call"] + df["strike_price_put"]
+    df["position_price_max_1"] = (
+        df["strike_price_put_low"] + df["strike_price_call_high"]
+    )
+    df["position_price_max_2"] = (
+        df["strike_price_put_high"] + df["strike_price_call_low"]
+    )
     return df
 
 
@@ -278,19 +337,19 @@ def run():
     df = select_expiry_dates(df)
     df = add_downloaded_info(df)
 
-    df = add_strike_price_data(df)
+    # df = add_strike_price_data(df)
 
-    print(df.tail())
-    df.to_csv("NIFTY_data.csv", header=True, index=False)
+    # print(df.tail())
+    # df.to_csv("NIFTY_data.csv", header=True, index=False)
 
 
 if __name__ == "__main__":
-    run()
-    # for i in range(1000):
-    #     try:
-    #         run()
-    #     except Exception as e:
-    #         print(e)
-    #         pass
-    #     print(f"{i+1} : Waiting for 30 seconds and trying again")
-    #     time.sleep(30)
+    # run()
+    for i in range(1000):
+        try:
+            run()
+        except Exception as e:
+            print(e)
+            pass
+        print(f"{i+1} : Waiting for 30 seconds and trying again")
+        time.sleep(30)
