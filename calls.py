@@ -56,7 +56,7 @@ def download_latest_nifty_data():
 
     url = url.replace(r"{{start_date}}", str(int(start_date_unix)))
     url = url.replace(r"{{end_date}}", str(int(end_date_unix)))
-
+    print(url)
     # response = requests.get(url)
     # print(response.content)
 
@@ -133,6 +133,7 @@ def select_expiry_dates(df):
 
 
 def download_and_extract_zip(url, extract_path):
+    print(url)
     ua = UserAgent()
     headers = {
         "User-Agent": ua.random,
@@ -341,6 +342,7 @@ def add_strike_price_data(df):
 
 
 def run():
+
     df = parse_nifty_data_to_dataframe()
     df = select_expiry_dates(df)
     df = add_downloaded_info(df)
@@ -354,6 +356,7 @@ def run():
 
 
 if __name__ == "__main__":
+    # download_latest_nifty_data()
     run()
     # for i in range(1000):
     # try:
