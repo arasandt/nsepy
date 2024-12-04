@@ -226,7 +226,6 @@ def download_options_chain(row):
 def run():
     df = parse_nifty_data_to_dataframe()
     df = select_expiry_dates(df)
-
     df = add_downloaded_info(df)
 
     print(df.tail())
