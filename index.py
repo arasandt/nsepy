@@ -2,8 +2,11 @@ import datetime
 import sys
 import pandas as pd
 from glob import glob
+import math
+import json
 
 options_data_folder = "fo"
+nifty_json = "nifty_json_data.json"
 
 
 def validate_date(date_str):
@@ -43,6 +46,36 @@ def validate_and_print(date, date_type):
         raise Exception(f"Invalid {date_type} date")
 
 
+def conditional_round_100(x):
+    remainder = x % 100
+    if remainder >= 50:
+        return math.ceil(x / 100) * 100
+    return math.floor(x / 100) * 100
+
+
+def parse_nifty_data_to_dataframe():
+    with open("nifty_json_data.json", "r") as f:
+        data = json.loads(f.read())
+
+    df = pd.DataFrame()
+    df["unixtimestamp"] = data["chart"]["result"][0]["timestamp"]
+    df["date"] = df["unixtimestamp"].apply(
+        lambda x: datetime.datetime.fromtimestamp((x))
+    )
+    df["date"] = pd.to_datetime(df["date"]).dt.normalize()
+    df["high"] = data["chart"]["result"][0]["indicators"]["quote"][0]["high"]
+    df["low"] = data["chart"]["result"][0]["indicators"]["quote"][0]["low"]
+    df["close"] = data["chart"]["result"][0]["indicators"]["quote"][0]["close"]
+    return df
+
+
+def get_strike_price_for_start_date(start_date):
+    df = parse_nifty_data_to_dataframe()
+    df = df[df["date"] == start_date]
+    print(df["close"].values[0])
+    return df["close"].values[0]
+
+
 def main():
     upcoming_expiry_date = get_upcoming_expiry_date()
     default_date = datetime.datetime.now().strftime("%Y-%m-%d")
@@ -53,8 +86,10 @@ def main():
     try:
         validate_and_print(start_date, "start")
         validate_and_print(expiry_date, "expiry")
-    except Exception as error:
+    except Exception:
         sys.exit(1)
+
+    strike_price = get_strike_price_for_start_date(start_date)
 
 
 if __name__ == "__main__":
