@@ -190,18 +190,26 @@ def main():
         columns={"HIGH_PRICE": "MAX_1", "LOW_PRICE": "MAX_2"}
     )
 
+    grouped_data["POSITION_PRICE"] = grouped_data.groupby("EXPIRY_DATE")[
+        "CLOSE_PRIC"
+    ].transform("first")
+
     grouped_data = grouped_data.reindex(
         columns=[
             "FILE_DATE",
             "NIFTY_CLOSE",
             "STRIKE_PRICE",
             "EXPIRY_DATE",
+            "POSITION_PRICE",
             "CLOSE_PRIC",
             "MAX_1",
             "MAX_2",
         ]
     )
 
+    grouped_data["POSTITION_PL"] = (
+        grouped_data["CLOSE_PRIC"] - grouped_data["POSITION_PRICE"]
+    ) * 25
     print(grouped_data)
 
     # next_day = datetime.datetime.strptime(start_date, "%Y-%m-%d") + datetime.timedelta(
