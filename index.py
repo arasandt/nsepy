@@ -72,6 +72,9 @@ def parse_nifty_data_to_dataframe():
 
 def get_strike_price_for_start_date(df, start_date):
     df = df[df["date"] == datetime.datetime.strptime(start_date, "%Y-%m-%d")]
+    if not len(df):
+        print(f"No data found for {start_date}. Please change dates and try again.")
+        sys.exit(1)
     close_price = df["close"].values[0]
     return conditional_round_100(close_price), round(close_price, 2)
 
@@ -82,8 +85,8 @@ def main():
 
     # start_date = get_date_input("start date", default_date)
     # expiry_date = get_date_input("expiry date", upcoming_expiry_date)
-    start_date = "2024-11-25"
-    expiry_date = "2024-11-28"
+    start_date = "2024-10-11"
+    expiry_date = "2024-10-17"
 
     try:
         validate_and_print(start_date, "start")
@@ -193,6 +196,30 @@ def main():
     grouped_data["POSITION_PRICE"] = grouped_data.groupby("EXPIRY_DATE")[
         "CLOSE_PRIC"
     ].transform("first")
+    grouped_data["POSITION_PRICE_DATE"] = grouped_data.groupby("EXPIRY_DATE")[
+        "FILE_DATE"
+    ].transform("first")
+
+    grouped_data.loc[
+        grouped_data["POSITION_PRICE_DATE"] == grouped_data["FILE_DATE"],
+        ["MAX_1", "MAX_2"],
+    ] = 0
+
+    grouped_data["POSITION_PL"] = (
+        grouped_data["CLOSE_PRIC"] - grouped_data["POSITION_PRICE"]
+    ) * 25
+
+    grouped_data["POSITION_PL_MAX_1"] = (
+        grouped_data["MAX_1"] - grouped_data["POSITION_PRICE"]
+    ) * 25
+    grouped_data["POSITION_PL_MAX_2"] = (
+        grouped_data["MAX_2"] - grouped_data["POSITION_PRICE"]
+    ) * 25
+
+    grouped_data.loc[
+        grouped_data["POSITION_PRICE_DATE"] == grouped_data["FILE_DATE"],
+        ["MAX_1", "MAX_2", "POSITION_PL_MAX_1", "POSITION_PL_MAX_2"],
+    ] = 0
 
     grouped_data = grouped_data.reindex(
         columns=[
@@ -201,15 +228,16 @@ def main():
             "STRIKE_PRICE",
             "EXPIRY_DATE",
             "POSITION_PRICE",
+            # "POSITION_PRICE_DATE",
             "CLOSE_PRIC",
             "MAX_1",
             "MAX_2",
+            "POSITION_PL",
+            "POSITION_PL_MAX_1",
+            "POSITION_PL_MAX_2",
         ]
     )
 
-    grouped_data["POSTITION_PL"] = (
-        grouped_data["CLOSE_PRIC"] - grouped_data["POSITION_PRICE"]
-    ) * 25
     print(grouped_data)
 
     # next_day = datetime.datetime.strptime(start_date, "%Y-%m-%d") + datetime.timedelta(
