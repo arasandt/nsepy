@@ -4,6 +4,7 @@ import pandas as pd
 from glob import glob
 import math
 import json
+import os
 
 options_data_folder = "fo"
 nifty_json = "nifty_json_data.json"
@@ -69,11 +70,10 @@ def parse_nifty_data_to_dataframe():
     return df
 
 
-def get_strike_price_for_start_date(start_date):
-    df = parse_nifty_data_to_dataframe()
-    print(df.head())
+def get_strike_price_for_start_date(df, start_date):
     df = df[df["date"] == datetime.datetime.strptime(start_date, "%Y-%m-%d")]
-    return conditional_round_100(df["close"].values[0])
+    close_price = df["close"].values[0]
+    return conditional_round_100(close_price), round(close_price, 2)
 
 
 def main():
@@ -91,7 +91,147 @@ def main():
     except Exception:
         sys.exit(1)
 
-    strike_price = get_strike_price_for_start_date(start_date)
+    nifty_data_df = parse_nifty_data_to_dataframe()
+    strike_price, close_price = get_strike_price_for_start_date(
+        nifty_data_df, start_date
+    )
+    print(f"Strike price selected for {start_date} ({close_price}) : {strike_price} ")
+
+    # from next day to start_date get price for call and put options. the data is present in fo/opDDMMDD.csv file.
+    # Get the next day after start_date
+
+    # Get all files between start_date and expiry_date
+    start_date = datetime.datetime.strptime(start_date, "%Y-%m-%d")
+    expiry_date = datetime.datetime.strptime(expiry_date, "%Y-%m-%d")
+
+    data_for_dates = pd.DataFrame()
+    current_dt = start_date
+
+    while current_dt <= expiry_date:
+        date_str = current_dt.strftime("%d%m%y")
+        file_path = f"{options_data_folder}/op{date_str}_cleaned.csv"
+        if os.path.exists(file_path):
+            df = pd.read_csv(file_path)
+            df.drop(
+                columns=[
+                    "NOTIONAL_V",
+                    "TRADED_QUA",
+                    "UNDRLNG_ST",
+                    "PREMIUM_TR",
+                    "SETTLEMENT",
+                    "OPEN_PRICE",
+                    "PREVIOUS_S",
+                    # "CLOSE_PRIC",
+                    "NET_CHANGE",
+                    "OI_NO_CON",
+                    "TRD_NO_CON",
+                ],
+                inplace=True,
+                axis=1,
+            )
+            df["FILE_DATE"] = datetime.datetime.strptime(date_str, "%d%m%y")
+            data_for_dates = pd.concat([data_for_dates, df], ignore_index=True)
+        current_dt += datetime.timedelta(days=1)
+
+    if not len(data_for_dates):
+        print(f"No options data files found between {start_date} and {expiry_date}")
+        sys.exit(1)
+
+    data_for_dates["STRIKE_PRICE"] = pd.to_numeric(
+        data_for_dates["CONTRACT_D"].str[24:], errors="coerce"
+    )
+    data_for_dates["EXPIRY_DATE"] = pd.to_datetime(
+        data_for_dates["CONTRACT_D"].str[11:22], format="%d-%b-%Y"
+    )
+    data_for_dates["OPTION_TYPE"] = data_for_dates["CONTRACT_D"].str[22:24]
+
+    data_for_dates = data_for_dates[data_for_dates["STRIKE_PRICE"] == strike_price]
+    data_for_dates = data_for_dates[data_for_dates["EXPIRY_DATE"] == expiry_date]
+    # print(data_for_dates.head(5))
+
+    data_for_dates_swap = data_for_dates.copy()
+
+    high_price = []
+    low_price = []
+
+    for row in data_for_dates_swap.iterrows():
+        if row[1]["OPTION_TYPE"] == "CE":
+            low_price.append(row[1]["HIGH_PRICE"])
+            high_price.append(row[1]["LOW_PRICE"])
+        else:
+            low_price.append(row[1]["LOW_PRICE"])
+            high_price.append(row[1]["HIGH_PRICE"])
+
+    data_for_dates_swap["HIGH_PRICE"] = high_price
+    data_for_dates_swap["LOW_PRICE"] = low_price
+
+    # print(data_for_dates_swap.head(5))
+
+    grouped_data = (
+        data_for_dates_swap.groupby(["FILE_DATE", "STRIKE_PRICE", "EXPIRY_DATE"])[
+            ["CLOSE_PRIC", "HIGH_PRICE", "LOW_PRICE"]
+        ]
+        .sum()
+        .reset_index()
+    )
+
+    grouped_data = pd.merge(
+        grouped_data,
+        nifty_data_df[["date", "close"]],
+        left_on="FILE_DATE",
+        right_on="date",
+        how="left",
+    )[grouped_data.columns.tolist() + ["close"]].rename(
+        columns={"close": "NIFTY_CLOSE"}
+    )
+
+    grouped_data = grouped_data.rename(
+        columns={"HIGH_PRICE": "MAX_1", "LOW_PRICE": "MAX_2"}
+    )
+
+    grouped_data = grouped_data.reindex(
+        columns=[
+            "FILE_DATE",
+            "NIFTY_CLOSE",
+            "STRIKE_PRICE",
+            "EXPIRY_DATE",
+            "CLOSE_PRIC",
+            "MAX_1",
+            "MAX_2",
+        ]
+    )
+
+    print(grouped_data)
+
+    # next_day = datetime.datetime.strptime(start_date, "%Y-%m-%d") + datetime.timedelta(
+    #     days=1
+    # )
+    # next_day_str = next_day.strftime("%d%m%y")
+
+    # # Read options data file for next day
+    # options_file = f"{options_data_folder}/op{next_day_str}_cleaned.csv"
+    # if not os.path.exists(options_file):
+    #     print(f"Options data file not found for {next_day_str}")
+    #     sys.exit(1)
+
+    # # Read options data into dataframe
+    # options_df = pd.read_csv(options_file)
+
+    # # Filter for selected strike price
+    # strike_options = options_df[options_df["STRIKE_PR"] == strike_price]
+
+    # # Get call and put option prices
+    # call_options = strike_options[strike_options["OPTION_TYP"] == "CE"]
+    # put_options = strike_options[strike_options["OPTION_TYP"] == "PE"]
+
+    # if len(call_options) > 0:
+    #     print(
+    #         f"Call option price for strike {strike_price}: {call_options['CLOSE'].values[0]}"
+    #     )
+    # if len(put_options) > 0:
+    #     print(
+    #         f"Put option price for strike {strike_price}: {put_options['CLOSE'].values[0]}"
+    #     )
 
 
 if __name__ == "__main__":
