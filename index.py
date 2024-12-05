@@ -71,17 +71,19 @@ def parse_nifty_data_to_dataframe():
 
 def get_strike_price_for_start_date(start_date):
     df = parse_nifty_data_to_dataframe()
-    df = df[df["date"] == start_date]
-    print(df["close"].values[0])
-    return df["close"].values[0]
+    print(df.head())
+    df = df[df["date"] == datetime.datetime.strptime(start_date, "%Y-%m-%d")]
+    return conditional_round_100(df["close"].values[0])
 
 
 def main():
     upcoming_expiry_date = get_upcoming_expiry_date()
     default_date = datetime.datetime.now().strftime("%Y-%m-%d")
 
-    start_date = get_date_input("start date", default_date)
-    expiry_date = get_date_input("expiry date", upcoming_expiry_date)
+    # start_date = get_date_input("start date", default_date)
+    # expiry_date = get_date_input("expiry date", upcoming_expiry_date)
+    start_date = "2024-11-25"
+    expiry_date = "2024-11-28"
 
     try:
         validate_and_print(start_date, "start")
