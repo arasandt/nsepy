@@ -85,8 +85,8 @@ def main():
 
     # start_date = get_date_input("start date", default_date)
     # expiry_date = get_date_input("expiry date", upcoming_expiry_date)
-    start_date = "2024-10-11"
-    expiry_date = "2024-10-17"
+    start_date = "2024-08-09"
+    expiry_date = "2024-08-14"
 
     try:
         validate_and_print(start_date, "start")
