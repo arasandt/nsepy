@@ -184,6 +184,7 @@ def main():
     )[grouped_data.columns.tolist() + ["close"]].rename(
         columns={"close": "NIFTY_CLOSE"}
     )
+    grouped_data["NIFTY_CLOSE"] = round(grouped_data["NIFTY_CLOSE"], 2)
 
     grouped_data = grouped_data.rename(
         columns={"HIGH_PRICE": "MAX_1", "LOW_PRICE": "MAX_2"}
