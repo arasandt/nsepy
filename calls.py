@@ -204,7 +204,7 @@ def add_downloaded_info(df):
             cleaned_filenames.append(cleaned_file_name)
         else:
             # print("Downloading Option Chain")
-            download_options_chain(row[1]["date"])
+            # download_options_chain(row[1]["date"])
             if os.path.exists(os.path.join(fo_dir, file_name)):
                 is_downloaded.append(True)
             else:

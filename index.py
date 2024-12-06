@@ -24,6 +24,18 @@ def get_upcoming_expiry_date():
     current_month_year = datetime.datetime.now().strftime("%m%y")
     pattern = f"{options_data_folder}/*{current_month_year}_cleaned.csv"
 
+    # Find the latest date by extracting dates from filenames and converting to datetime
+    max_date_file = max(
+        int(
+            file.split("_")[0].split("/op")[-1][4:]
+            + file.split("_")[0].split("/op")[-1][2:4]
+            + file.split("_")[0].split("/op")[-1][:2]
+        )
+        for file in glob(pattern)
+    )
+    max_date_file = datetime.datetime.strptime(str(max_date_file), "%y%m%d")
+    print(f"Data loaded until : {max_date_file.date()}")
+
     for file in glob(pattern):
         df = pd.read_csv(file)
         df["CONTRACT_D_NEW"] = pd.to_datetime(
