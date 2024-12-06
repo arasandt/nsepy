@@ -97,8 +97,8 @@ def main():
 
     # start_date = get_date_input("start date", default_date)
     # expiry_date = get_date_input("expiry date", upcoming_expiry_date)
-    start_date = "2024-08-09"
-    expiry_date = "2024-08-14"
+    start_date = "2024-12-02"
+    expiry_date = "2024-12-05"
 
     try:
         validate_and_print(start_date, "start")
@@ -126,7 +126,18 @@ def main():
         date_str = current_dt.strftime("%d%m%y")
         file_path = f"{options_data_folder}/op{date_str}_cleaned.csv"
         if os.path.exists(file_path):
+
             df = pd.read_csv(file_path)
+            # Check if any records match the expiry date
+            df["CONTRACT_D_NEW"] = pd.to_datetime(
+                df["CONTRACT_D"].str[11:22], format="%d-%b-%Y"
+            )
+            if not (df["CONTRACT_D_NEW"] == expiry_date).any():
+                print(f"Expiry date {expiry_date.date()} is invalid")
+                sys.exit(1)
+
+            print(f"Reading data for {current_dt.date()}")
+
             df.drop(
                 columns=[
                     "NOTIONAL_V",
